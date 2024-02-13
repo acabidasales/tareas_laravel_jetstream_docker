@@ -1,0 +1,35 @@
+FROM php:8.0.2-apache
+
+WORKDIR /var/www/html
+
+RUN apt-get update && \
+    apt-get install -y \
+        libzip-dev \
+        zip \
+        unzip \
+        && docker-php-ext-install zip pdo_mysql \
+        && a2enmod rewrite
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+
+RUN apt-get install -y nodejs npm
+
+RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
+    apt-get install -y nodejs
+
+RUN npm install vite
+
+COPY . /var/www/html
+
+RUN composer install --ignore-platform-reqs
+RUN npm install
+
+EXPOSE 5173
+
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html/storage
+
+COPY start2.sh /usr/local/bin/start2.sh
+RUN chmod +x /usr/local/bin/start2.sh
+
+CMD ["/usr/local/bin/start2.sh"]
